@@ -37,7 +37,7 @@ class GeometryFightGame extends FlameGame {
   double _timeScale = 1.0;
 
   // Screen shake
-  Vector2 _shakeOffset = Vector2.zero();
+  final Vector2 _shakeOffset = Vector2.zero();
   double _shakeIntensity = 0.0;
   double _shakeDuration = 0.0;
 

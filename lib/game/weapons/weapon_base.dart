@@ -168,7 +168,7 @@ class WeaponFactory {
       type: WeaponType.laser,
       name: 'Laser',
       description: 'Raggio continuo ad alto DPS',
-      color: const Color(0xFFFF0000),
+      color: Color(0xFFFF0000),
       fireRate: 20.0,
       damage: 0.3, // Danno per tick, ma tick molto frequenti
     ),

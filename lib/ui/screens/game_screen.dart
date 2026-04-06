@@ -6,7 +6,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
-import 'package:flame/components.dart' show Vector2;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_joystick/flutter_joystick.dart';
 
@@ -24,12 +23,12 @@ class GameScreen extends ConsumerStatefulWidget {
 class _GameScreenState extends ConsumerState<GameScreen> {
   late GeometryFightGame _game;
   // Variabili per l'HUD - verranno aggiornate dal gioco
-  int _score = 0;
-  int _geoms = 0;
-  double _multiplier = 1.0;
-  int _lives = 3;
-  int _bombs = 1;
-  int _wave = 0;
+  final int _score = 0;
+  final int _geoms = 0;
+  final double _multiplier = 1.0;
+  final int _lives = 3;
+  final int _bombs = 1;
+  final int _wave = 0;
 
   @override
   void initState() {
