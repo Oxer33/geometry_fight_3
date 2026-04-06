@@ -19,6 +19,9 @@ import 'systems/powerup_system.dart';
 import 'collision_manager.dart';
 import 'weapons/weapons.dart';
 import 'entities/bosses/the_grid_boss.dart';
+import 'entities/bosses/hydra_boss.dart';
+import 'entities/bosses/singularity_boss.dart';
+import 'entities/bosses/swarm_mother_boss.dart';
 
 class GeometryFightGame extends FlameGame {
   final SaveData saveData;
@@ -91,7 +94,10 @@ class GeometryFightGame extends FlameGame {
     waveSystem.onEnemySpawn = _onEnemySpawn;
     waveSystem.onWaveStart = _onWaveStart;
     waveSystem.onWaveComplete = _onWaveComplete;
-    waveSystem.onBossSpawned = _onBossSpawned;
+    waveSystem.onTheGridBossSpawned = _onTheGridBossSpawned;
+    waveSystem.onHydraBossSpawned = _onHydraBossSpawned;
+    waveSystem.onSingularityBossSpawned = _onSingularityBossSpawned;
+    waveSystem.onSwarmMotherBossSpawned = _onSwarmMotherBossSpawned;
 
     // Collega il collision manager ai sistemi
     collisionManager.scoreSystem = scoreSystem;
@@ -172,19 +178,49 @@ class GeometryFightGame extends FlameGame {
     debugPrint('✅ Wave $waveNumber completata!');
   }
 
-  /// Quando il boss viene spawnato
-  void _onBossSpawned(TheGridBoss boss) {
-    debugPrint('💀 BOSS SPAWNATO: The Grid!');
-    // Collega il boss per lo spawn dei proiettili nemici
+  // ============================================================
+  // CALLBACK DEI BOSS
+  // ============================================================
+
+  /// The Grid (Wave 10)
+  void _onTheGridBossSpawned(TheGridBoss boss) {
+    debugPrint('💀 BOSS SPAWNATO: The Grid (Wave 10)!');
     boss.onEnemyShoot = _onBossEnemyShoot;
-    // Screen shake grande quando appare il boss
     startShake(intensity: 15.0, duration: 0.5);
-    // Effetto particellare
-    particleSystem.explosion(
-      position: boss.position.clone(),
-      color: BossConstants.gridColor,
-      count: 40,
-    );
+    particleSystem.explosion(position: boss.position.clone(), color: BossConstants.gridColor, count: 40);
+  }
+
+  /// Hydra (Wave 20)
+  void _onHydraBossSpawned(HydraBoss boss) {
+    debugPrint('💀 BOSS SPAWNATO: Hydra (Wave 20)!');
+    boss.onEnemyShoot = _onBossEnemyShoot;
+    startShake(intensity: 15.0, duration: 0.5);
+    particleSystem.explosion(position: boss.position.clone(), color: BossConstants.hydraColor, count: 40);
+  }
+
+  /// Singularity (Wave 30)
+  void _onSingularityBossSpawned(SingularityBoss boss) {
+    debugPrint('💀 BOSS SPAWNATO: Singularity (Wave 30)!');
+    boss.onEnemyShoot = _onBossEnemyShoot;
+    startShake(intensity: 15.0, duration: 0.5);
+    particleSystem.explosion(position: boss.position.clone(), color: BossConstants.singularityColor, count: 40);
+  }
+
+  /// Swarm Mother (Wave 40)
+  void _onSwarmMotherBossSpawned(SwarmMotherBoss boss) {
+    debugPrint('💀 BOSS SPAWNATO: Swarm Mother (Wave 40)!');
+    boss.onEnemyShoot = _onBossEnemyShoot;
+    boss.onMinionSpawn = _onBossMinionSpawn;
+    startShake(intensity: 15.0, duration: 0.5);
+    particleSystem.explosion(position: boss.position.clone(), color: BossConstants.swarmMotherColor, count: 40);
+  }
+
+  /// Quando un minion del Swarm Mother viene spawnato
+  void _onBossMinionSpawn(Enemy minion) {
+    minion.onDeath = (deadEnemy) {
+      waveSystem.onEnemyKilled();
+    };
+    add(minion);
   }
 
   /// Quando il boss spara un proiettile nemico

@@ -1,6 +1,9 @@
 // ============================================================
 // WAVE SYSTEM - Geometry Fight 3
 // ============================================================
+// Gestisce le wave di nemici e i boss multi-fase.
+// Boss: The Grid (Wave 10), Hydra (Wave 20), Singularity (Wave 30), Swarm Mother (Wave 40)
+// ============================================================
 import 'dart:math';
 import 'package:flame/components.dart';
 import '../../data/constants.dart';
@@ -11,6 +14,9 @@ import '../../game/entities/enemies/snake.dart';
 import '../../game/entities/enemies/mine.dart';
 import '../../game/entities/enemies/all_enemies.dart';
 import '../../game/entities/bosses/the_grid_boss.dart';
+import '../../game/entities/bosses/hydra_boss.dart';
+import '../../game/entities/bosses/singularity_boss.dart';
+import '../../game/entities/bosses/swarm_mother_boss.dart';
 import 'score_system.dart';
 import 'particle_system.dart';
 import 'powerup_system.dart';
@@ -34,7 +40,10 @@ class WaveSystem extends Component {
   Function(int waveNumber)? onWaveComplete;
   Function(int waveNumber)? onBossSpawn;
   Function(Enemy enemy)? onEnemySpawn;
-  Function(TheGridBoss boss)? onBossSpawned;
+  Function(TheGridBoss boss)? onTheGridBossSpawned;
+  Function(HydraBoss boss)? onHydraBossSpawned;
+  Function(SingularityBoss boss)? onSingularityBossSpawned;
+  Function(SwarmMotherBoss boss)? onSwarmMotherBossSpawned;
 
   WaveSystem({required this.scoreSystem, required this.particleSystem, required this.powerUpSystem});
 
@@ -130,18 +139,55 @@ class WaveSystem extends Component {
     add(enemy);
   }
 
-  /// Spawn del boss The Grid alla wave 10
+  /// Spawn del boss appropriato in base alla wave
   void _spawnBoss() {
     _bossSpawned = true;
     final bossPosition = Vector2(
       ArenaConstants.arenaWidth / 2,
       ArenaConstants.arenaHeight / 2 - 300,
     );
-    final boss = TheGridBoss(position: bossPosition);
-    _enemiesRemaining = 1; // Il boss conta come un nemico
-    onBossSpawned?.call(boss);
-    onEnemySpawn?.call(boss);
-    add(boss);
+
+    // Scegli il boss in base alla wave
+    if (currentWave == 10) {
+      final boss = TheGridBoss(position: bossPosition);
+      _setupBossCallbacks(boss);
+      onTheGridBossSpawned?.call(boss);
+      onEnemySpawn?.call(boss);
+      add(boss);
+    } else if (currentWave == 20) {
+      final boss = HydraBoss(position: bossPosition);
+      _setupBossCallbacks(boss);
+      onHydraBossSpawned?.call(boss);
+      onEnemySpawn?.call(boss);
+      add(boss);
+    } else if (currentWave == 30) {
+      final boss = SingularityBoss(position: bossPosition);
+      _setupBossCallbacks(boss);
+      onSingularityBossSpawned?.call(boss);
+      onEnemySpawn?.call(boss);
+      add(boss);
+    } else if (currentWave == 40) {
+      final boss = SwarmMotherBoss(position: bossPosition);
+      _setupBossCallbacks(boss);
+      onSwarmMotherBossSpawned?.call(boss);
+      onEnemySpawn?.call(boss);
+      add(boss);
+    } else {
+      // Boss di default per wave multiple di 10 oltre la 40
+      final boss = TheGridBoss(position: bossPosition);
+      _setupBossCallbacks(boss);
+      onTheGridBossSpawned?.call(boss);
+      onEnemySpawn?.call(boss);
+      add(boss);
+    }
+  }
+
+  /// Configura i callback comuni per tutti i boss
+  void _setupBossCallbacks(Enemy boss) {
+    _enemiesRemaining = 1;
+    boss.onDeath = (deadEnemy) {
+      onEnemyKilled();
+    };
   }
 
   void _completeWave() {
