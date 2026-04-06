@@ -17,6 +17,8 @@ import 'systems/score_system.dart';
 import 'systems/particle_system.dart';
 import 'systems/powerup_system.dart';
 import 'collision_manager.dart';
+import 'weapons/weapons.dart';
+import 'entities/bosses/the_grid_boss.dart';
 
 class GeometryFightGame extends FlameGame {
   final SaveData saveData;
@@ -89,6 +91,7 @@ class GeometryFightGame extends FlameGame {
     waveSystem.onEnemySpawn = _onEnemySpawn;
     waveSystem.onWaveStart = _onWaveStart;
     waveSystem.onWaveComplete = _onWaveComplete;
+    waveSystem.onBossSpawned = _onBossSpawned;
 
     // Collega il collision manager ai sistemi
     collisionManager.scoreSystem = scoreSystem;
@@ -105,13 +108,19 @@ class GeometryFightGame extends FlameGame {
   // CALLBACK DEL PLAYER
   // ============================================================
 
-  /// Quando il player spara, crea un proiettile
-  void _onPlayerShoot(Vector2 position, Vector2 direction) {
-    final projectile = PlayerProjectile(
-      position: position.clone(),
-      direction: direction.clone(),
-    );
-    add(projectile);
+  /// Quando il player spara, crea uno o più proiettili
+  void _onPlayerShoot(List<WeaponProjectileData> projectilesData) {
+    for (final data in projectilesData) {
+      final projectile = PlayerProjectile(
+        position: data.position.clone(),
+        direction: data.direction.clone(),
+        speed: data.speed,
+        bounces: data.bounces,
+        lifetime: data.lifetime,
+        color: data.color,
+      );
+      add(projectile);
+    }
   }
 
   /// Quando il player viene colpito
@@ -158,6 +167,26 @@ class GeometryFightGame extends FlameGame {
   /// Quando una wave viene completata
   void _onWaveComplete(int waveNumber) {
     debugPrint('✅ Wave $waveNumber completata!');
+  }
+
+  /// Quando il boss viene spawnato
+  void _onBossSpawned(TheGridBoss boss) {
+    debugPrint('💀 BOSS SPAWNATO: The Grid!');
+    // Collega il boss per lo spawn dei proiettili nemici
+    boss.onEnemyShoot = _onBossEnemyShoot;
+    // Screen shake grande quando appare il boss
+    startShake(intensity: 15.0, duration: 0.5);
+    // Effetto particellare
+    particleSystem.explosion(
+      position: boss.position.clone(),
+      color: BossConstants.gridColor,
+      count: 40,
+    );
+  }
+
+  /// Quando il boss spara un proiettile nemico
+  void _onBossEnemyShoot(EnemyProjectile projectile) {
+    add(projectile);
   }
 
   // ============================================================

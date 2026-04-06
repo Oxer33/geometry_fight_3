@@ -62,7 +62,7 @@ class Geom extends PositionComponent {
   void render(Canvas canvas) {
     if (_collected) return;
 
-    final center = Offset(this.size.x / 2, this.size.y / 2);
+    final center = Offset(size.x / 2, size.y / 2);
     final geomSize = GeomConstants.geomSize * (1.0 + sin(_pulseAnimation) * 0.1);
 
     // Glow esterno

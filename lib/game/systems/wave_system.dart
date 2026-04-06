@@ -10,6 +10,7 @@ import '../../game/entities/enemies/weaver.dart';
 import '../../game/entities/enemies/snake.dart';
 import '../../game/entities/enemies/mine.dart';
 import '../../game/entities/enemies/all_enemies.dart';
+import '../../game/entities/bosses/the_grid_boss.dart';
 import 'score_system.dart';
 import 'particle_system.dart';
 import 'powerup_system.dart';
@@ -28,10 +29,12 @@ class WaveSystem extends Component {
   int _enemiesRemaining = 0;
   int _enemiesTotal = 0;
   int _enemiesSpawned = 0;
+  bool _bossSpawned = false;
   Function(int waveNumber)? onWaveStart;
   Function(int waveNumber)? onWaveComplete;
   Function(int waveNumber)? onBossSpawn;
   Function(Enemy enemy)? onEnemySpawn;
+  Function(TheGridBoss boss)? onBossSpawned;
 
   WaveSystem({required this.scoreSystem, required this.particleSystem, required this.powerUpSystem});
 
@@ -50,6 +53,8 @@ class WaveSystem extends Component {
       if (_enemiesSpawned >= _enemiesTotal) _state = WaveState.active;
     } else if (_state == WaveState.active && _enemiesRemaining <= 0) {
       _completeWave();
+    } else if (_state == WaveState.bossFight && !_bossSpawned) {
+      _spawnBoss();
     }
   }
 
@@ -58,6 +63,7 @@ class WaveSystem extends Component {
     onWaveStart?.call(currentWave);
     if (currentWave % WaveConstants.bossWaveInterval == 0) {
       _state = WaveState.bossFight;
+      _bossSpawned = false;
       onBossSpawn?.call(currentWave);
     } else {
       _state = WaveState.spawning;
@@ -122,6 +128,20 @@ class WaveSystem extends Component {
 
     onEnemySpawn?.call(enemy);
     add(enemy);
+  }
+
+  /// Spawn del boss The Grid alla wave 10
+  void _spawnBoss() {
+    _bossSpawned = true;
+    final bossPosition = Vector2(
+      ArenaConstants.arenaWidth / 2,
+      ArenaConstants.arenaHeight / 2 - 300,
+    );
+    final boss = TheGridBoss(position: bossPosition);
+    _enemiesRemaining = 1; // Il boss conta come un nemico
+    onBossSpawned?.call(boss);
+    onEnemySpawn?.call(boss);
+    add(boss);
   }
 
   void _completeWave() {

@@ -40,10 +40,11 @@ class CollisionManager extends Component {
 
     // Trova tutti i proiettili, nemici e geom attivi nel gioco
     final projectiles = parent!.children.whereType<PlayerProjectile>().toList();
+    final enemyProjectiles = parent!.children.whereType<EnemyProjectile>().toList();
     final enemies = parent!.children.whereType<Enemy>().toList();
     final geoms = parent!.children.whereType<Geom>().toList();
 
-    // 1. Controlla collisioni proiettili -> nemici
+    // 1. Controlla collisioni proiettili player -> nemici
     for (final projectile in projectiles) {
       if (!projectile.isActive) continue;
 
@@ -61,7 +62,17 @@ class CollisionManager extends Component {
       }
     }
 
-    // 2. Controlla collisioni nemici -> player
+    // 2. Controlla collisioni proiettili nemici -> player
+    for (final projectile in enemyProjectiles) {
+      final distance = projectile.position.distanceTo(player!.position);
+      final collisionRadius = projectile.size.x / 2 + PlayerConstants.hurtboxRadius;
+
+      if (distance < collisionRadius) {
+        _onEnemyProjectileHitPlayer(projectile);
+      }
+    }
+
+    // 3. Controlla collisioni nemici -> player
     for (final enemy in enemies) {
       if (!enemy.isActive) continue;
 
@@ -74,7 +85,7 @@ class CollisionManager extends Component {
       }
     }
 
-    // 3. Controlla collisioni geom -> player (raccolta)
+    // 4. Controlla collisioni geom -> player (raccolta)
     for (final geom in geoms) {
       if (geom.isRemoved) continue;
 
@@ -111,6 +122,24 @@ class CollisionManager extends Component {
     if (!enemy.isActive) {
       _onEnemyKilled(enemy);
     }
+  }
+
+  /// Quando un proiettile nemico colpisce il player
+  void _onEnemyProjectileHitPlayer(EnemyProjectile projectile) {
+    if (player!.state == PlayerState.invincible || player!.state == PlayerState.dead) return;
+
+    projectile.removeFromParent();
+    player!.hit();
+
+    // Screen shake
+    game?.startShake(intensity: 8.0, duration: 0.2);
+
+    // Effetto esplosione
+    particleSystem?.explosion(
+      position: player!.position.clone(),
+      color: const Color(0xFFFF0000),
+      count: 10,
+    );
   }
 
   /// Quando un nemico colpisce il player
