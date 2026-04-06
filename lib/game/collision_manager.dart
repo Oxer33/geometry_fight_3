@@ -106,6 +106,13 @@ class CollisionManager extends Component {
   void _onProjectileHitEnemy(PlayerProjectile projectile, Enemy enemy) {
     // Disattiva il proiettile
     projectile.isActive = false;
+
+    // Se è un proiettile plasma, gestisci esplosione ad area
+    if (projectile.isPlasma) {
+      _handlePlasmaExplosion(projectile);
+      return;
+    }
+
     projectile.removeFromParent();
 
     // Danneggia il nemico
@@ -122,6 +129,39 @@ class CollisionManager extends Component {
     if (!enemy.isActive) {
       _onEnemyKilled(enemy);
     }
+  }
+
+  /// Gestisce l'esplosione del plasma cannon (damage ad area)
+  void _handlePlasmaExplosion(PlayerProjectile projectile) {
+    final explosionRadius = projectile.explosionRadius > 0 ? projectile.explosionRadius : 80.0;
+    final explosionPosition = projectile.position.clone();
+
+    // Effetto visivo esplosione
+    particleSystem?.explosion(
+      position: explosionPosition,
+      color: const Color(0xFFCC00FF),
+      count: 30,
+    );
+
+    // Screen shake per esplosione
+    game?.startShake(intensity: 8.0, duration: 0.3);
+
+    // Danneggia tutti i nemici nel raggio
+    final enemies = parent!.children.whereType<Enemy>().toList();
+    for (final enemy in enemies) {
+      if (!enemy.isActive) continue;
+      final distance = explosionPosition.distanceTo(enemy.position);
+      if (distance < explosionRadius + enemy.size.x / 2) {
+        // Danno pieno al centro, ridotto ai bordi
+        final damageMultiplier = 1.0 - (distance / (explosionRadius + enemy.size.x / 2));
+        enemy.takeDamage(3.0 * damageMultiplier);
+        if (!enemy.isActive) {
+          _onEnemyKilled(enemy);
+        }
+      }
+    }
+
+    projectile.removeFromParent();
   }
 
   /// Quando un proiettile nemico colpisce il player

@@ -118,6 +118,9 @@ class GeometryFightGame extends FlameGame {
         bounces: data.bounces,
         lifetime: data.lifetime,
         color: data.color,
+        customSize: data.size,
+        isHoming: data.isHoming,
+        isPlasma: data.isPlasma,
       );
       add(projectile);
     }

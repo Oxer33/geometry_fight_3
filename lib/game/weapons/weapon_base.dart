@@ -120,6 +120,8 @@ class WeaponProjectileData {
   final Color color;
   final double damage;
   final double? size; // Opzionale, per proiettili di dimensioni diverse
+  final bool isHoming; // Proiettile a ricerca
+  final bool isPlasma; // Proiettile esplosivo
 
   const WeaponProjectileData({
     required this.position,
@@ -130,6 +132,8 @@ class WeaponProjectileData {
     this.color = ProjectileConstants.bulletColor,
     this.damage = 1.0,
     this.size,
+    this.isHoming = false,
+    this.isPlasma = false,
   });
 }
 

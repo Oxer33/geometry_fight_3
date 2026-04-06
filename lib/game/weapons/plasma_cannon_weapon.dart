@@ -28,6 +28,7 @@ class PlasmaCannonWeapon extends WeaponBase {
         color: config.color,
         damage: config.damage,
         size: 12.0, // Proiettile più grande
+        isPlasma: true, // Attiva esplosione
       ),
     ];
   }

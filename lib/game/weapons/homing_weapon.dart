@@ -37,6 +37,7 @@ class HomingWeapon extends WeaponBase {
         color: config.color,
         damage: config.damage,
         size: 8.0,
+        isHoming: true, // Attiva homing
       ));
     }
 
