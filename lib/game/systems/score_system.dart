@@ -31,7 +31,12 @@ class ScoreSystem extends Component {
   }
 
   void addBossScore(int baseScore) { addKillScore(baseScore * 10); }
-  void collectGeom(int value) { _currentGeoms += (value * _multiplier).round(); _totalGeoms += _currentGeoms; onGeomCollected?.call(_currentGeoms); }
+  void collectGeom(int value) {
+    final geomValue = (value * _multiplier).round();
+    _currentGeoms += geomValue;
+    _totalGeoms += geomValue;
+    onGeomCollected?.call(_currentGeoms);
+  }
   void resetMultiplier() { _multiplier = 1.0; onMultiplierChanged?.call(_multiplier); }
   void _resetCombo() { _comboTimer = 0.0; _recentKills = 0; _comboActive = false; }
   void addWaveBonus(int waveNumber) { _currentScore += waveNumber * 100; onScoreChanged?.call(_currentScore); }

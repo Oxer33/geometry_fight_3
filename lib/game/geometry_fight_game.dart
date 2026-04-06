@@ -1,6 +1,7 @@
 // ============================================================
 // GEOMETRY FIGHT GAME - Geometry Fight 3
 // ============================================================
+import 'dart:math';
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +33,11 @@ class GeometryFightGame extends FlameGame {
   double gameTime = 0.0;
   bool isPaused = false;
   double _timeScale = 1.0;
+
+  // Screen shake
+  Vector2 _shakeOffset = Vector2.zero();
+  double _shakeIntensity = 0.0;
+  double _shakeDuration = 0.0;
 
   GeometryFightGame({required this.saveData, required this.onGameOver});
 
@@ -89,6 +95,7 @@ class GeometryFightGame extends FlameGame {
     collisionManager.particleSystem = particleSystem;
     collisionManager.waveSystem = waveSystem;
     collisionManager.player = player;
+    collisionManager.game = this; // Per screen shake
 
     // Avvia la prima wave
     waveSystem.startFirstWave();
@@ -169,8 +176,38 @@ class GeometryFightGame extends FlameGame {
       camera.viewfinder.position.lerp(player!.position, PlayerConstants.cameraLerp);
     }
 
+    // Aggiorna screen shake
+    _updateShake(dt);
+
     // Aggiorna la griglia deformabile
     gridDistortion.updateGrid(dt);
+  }
+
+  // ============================================================
+  // SCREEN SHAKE
+  // ============================================================
+
+  /// Attiva lo screen shake con intensità e durata
+  void startShake({double intensity = 5.0, double duration = 0.3}) {
+    _shakeIntensity = intensity;
+    _shakeDuration = duration;
+  }
+
+  void _updateShake(double dt) {
+    if (_shakeDuration > 0) {
+      _shakeDuration -= dt;
+      final random = Random();
+      _shakeOffset.setValues(
+        (random.nextDouble() - 0.5) * _shakeIntensity * 2,
+        (random.nextDouble() - 0.5) * _shakeIntensity * 2,
+      );
+      camera.viewfinder.position.add(_shakeOffset);
+      // Decadimento intensità
+      _shakeIntensity *= 0.9;
+    } else {
+      _shakeOffset.setZero();
+      _shakeIntensity = 0;
+    }
   }
 
   @override

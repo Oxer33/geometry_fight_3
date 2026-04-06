@@ -13,10 +13,12 @@ import '../data/constants.dart';
 import 'entities/player.dart';
 import 'entities/enemy.dart';
 import 'entities/projectile.dart';
+import 'entities/geom.dart';
 import 'systems/score_system.dart';
 import 'systems/particle_system.dart';
 import 'systems/wave_system.dart';
 import 'entities/enemies/all_enemies.dart';
+import 'geometry_fight_game.dart';
 
 class CollisionManager extends Component {
   // Riferimenti ai sistemi (vengono imposti dal gioco)
@@ -24,9 +26,10 @@ class CollisionManager extends Component {
   ParticleSystem? particleSystem;
   WaveSystem? waveSystem;
   Player? player;
+  GeometryFightGame? game;
 
-  // Callback per quando un nemico muore
-  Function(Enemy enemy)? onEnemyKilled;
+  // Random per drop
+  final Random _random = Random();
 
   @override
   void update(double dt) {
@@ -35,9 +38,10 @@ class CollisionManager extends Component {
     // Se il player è morto, non processare collisioni
     if (player == null || !player!.isAlive) return;
 
-    // Trova tutti i proiettili e nemici attivi nel gioco
+    // Trova tutti i proiettili, nemici e geom attivi nel gioco
     final projectiles = parent!.children.whereType<PlayerProjectile>().toList();
     final enemies = parent!.children.whereType<Enemy>().toList();
+    final geoms = parent!.children.whereType<Geom>().toList();
 
     // 1. Controlla collisioni proiettili -> nemici
     for (final projectile in projectiles) {
@@ -69,6 +73,18 @@ class CollisionManager extends Component {
         break;
       }
     }
+
+    // 3. Controlla collisioni geom -> player (raccolta)
+    for (final geom in geoms) {
+      if (geom.isRemoved) continue;
+
+      final distance = geom.position.distanceTo(player!.position);
+      final collectionRadius = geom.collectionRadius + PlayerConstants.playerRadius;
+
+      if (distance < collectionRadius) {
+        _onGeomCollected(geom);
+      }
+    }
   }
 
   // ============================================================
@@ -84,7 +100,7 @@ class CollisionManager extends Component {
     // Danneggia il nemico
     enemy.takeDamage(1.0);
 
-    // Effetto particellare
+    // Effetto particellare piccolo
     particleSystem?.explosion(
       position: enemy.position.clone(),
       color: enemy.color,
@@ -101,11 +117,25 @@ class CollisionManager extends Component {
   void _onEnemyHitPlayer(Enemy enemy) {
     player!.hit();
 
+    // Screen shake
+    game?.startShake(intensity: 10.0, duration: 0.3);
+
     // Effetto esplosione
     particleSystem?.explosion(
       position: player!.position.clone(),
       color: const Color(0xFFFF0000),
       count: 15,
+    );
+  }
+
+  /// Quando un geom viene raccolto
+  void _onGeomCollected(Geom geom) {
+    geom.collect();
+    scoreSystem?.collectGeom(geom.value);
+    particleSystem?.explosion(
+      position: geom.position.clone(),
+      color: GeomConstants.geomColor,
+      count: 3,
     );
   }
 
@@ -124,8 +154,14 @@ class CollisionManager extends Component {
       count: 20,
     );
 
+    // Screen shake piccolo
+    game?.startShake(intensity: 3.0, duration: 0.15);
+
     // Deforma la griglia
     // (accesso tramite il gioco principale)
+
+    // Drop geom
+    _dropGeoms(enemy);
 
     // Se è uno Splitter, crea 3 mini-splitter
     if (enemy is Splitter && enemy.level == 1) {
@@ -134,15 +170,12 @@ class CollisionManager extends Component {
 
     // Rimuovi il nemico
     enemy.removeFromParent();
-
-    // Callback esterna
-    onEnemyKilled?.call(enemy);
   }
 
   /// Crea i figli dello Splitter quando muore
   void _spawnSplitterChildren(Splitter parent) {
     for (int i = 0; i < 3; i++) {
-      final angle = (i * 2 * 3.14159 / 3);
+      final angle = (i * 2 * pi / 3);
       final offset = Vector2(cos(angle), sin(angle)) * 30;
       final child = Splitter(
         position: parent.position.clone() + offset,
@@ -152,6 +185,32 @@ class CollisionManager extends Component {
         _onEnemyKilled(deadEnemy);
       };
       parent.parent?.add(child);
+    }
+  }
+
+  /// Drop di geom quando un nemico muore
+  void _dropGeoms(Enemy enemy) {
+    final dropChance = PowerUpConstants.powerUpSpawnChance * 2; // 10% chance
+    final geomCount = _random.nextDouble() < dropChance ? 2 : 1;
+
+    for (int i = 0; i < geomCount; i++) {
+      // Offset casuale dalla posizione del nemico
+      final angle = _random.nextDouble() * 2 * pi;
+      final distance = _random.nextDouble() * 30;
+      final offset = Vector2(cos(angle) * distance, sin(angle) * distance);
+
+      final geom = Geom(
+        position: enemy.position.clone() + offset,
+        value: enemy.geomValue,
+      );
+
+      // Velocità iniziale casuale (effetto esplosione)
+      geom.velocity = Vector2(
+        cos(angle) * 100,
+        sin(angle) * 100,
+      );
+
+      parent?.add(geom);
     }
   }
 }
